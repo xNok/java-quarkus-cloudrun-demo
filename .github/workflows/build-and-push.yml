@@ -1,16 +1,16 @@
-name: Build and Push Docker Image
+name: Build, Test and Push Docker Image
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-push:
+  build-and-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -21,8 +21,19 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
 
-      - name: Build with Maven
+      - name: Build and test with Maven
         run: mvn -B package
+
+  build-and-push:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
