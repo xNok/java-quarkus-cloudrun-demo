@@ -25,7 +25,7 @@ The project consists of the following components:
 
 To run the application and tests locally, you'll need the following:
 
-*   Java 17+
+*   Java 21+
 *   Maven 3.8.x
 *   Docker
 
