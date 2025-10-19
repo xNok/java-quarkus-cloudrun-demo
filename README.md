@@ -27,25 +27,68 @@ To run the application and tests locally, you'll need the following:
 
 *   Java 21+
 *   Maven 3.8.x
-*   Docker
+*   Docker (for Testcontainers)
 
-1.  **Run the Pub/Sub emulator:**
+### Running Tests
 
-    ```bash
-    gcloud beta emulators pubsub start --project=test-project
-    ```
+The integration tests use **Testcontainers** to automatically start a Google Cloud Pub/Sub emulator in a Docker container. No manual setup required!
 
-2.  **Run the application in dev mode:**
+```bash
+mvn test
+```
 
-    ```bash
-    mvn quarkus:dev
-    ```
+The `PubSubEmulatorTestResource` manages the emulator lifecycle automatically for each test run.
 
-3.  **Run the integration tests:**
+### Running in Dev Mode
 
-    ```bash
-    mvn test
-    ```
+For local development with Quarkus dev mode:
+
+```bash
+mvn quarkus:dev
+```
+
+**Note:** Dev mode runs the app but doesn't automatically start the Pub/Sub emulator. To test Pub/Sub interactions:
+
+#### Option 1: Run tests (Recommended)
+Tests automatically start and manage the Pub/Sub emulator via Testcontainers:
+```bash
+mvn test
+```
+
+#### Option 2: Manual emulator setup
+For interactive testing, you can manually start the emulator and publish messages:
+
+1. **Start the Pub/Sub emulator** (requires gcloud SDK):
+   ```bash
+   gcloud beta emulators pubsub start --project=test-project
+   ```
+
+2. **Update `application.properties`** to use the emulator:
+   ```properties
+   %dev.quarkus.google.cloud.project-id=test-project
+   %dev.quarkus.google.cloud.pubsub.emulator-host=localhost:8085
+   %dev.incoming-topic=incoming-tasks-topic
+   %dev.completed-topic=completed-tasks-topic
+   ```
+
+3. **Run the app in dev mode**:
+   ```bash
+   mvn quarkus:dev
+   ```
+
+4. **Publish test messages** using the provided script:
+   ```bash
+   export PUBSUB_EMULATOR_HOST=localhost:8085
+   ./scripts/publish-test-message.sh
+   ```
+   
+   Or manually with gcloud:
+   ```bash
+   export PUBSUB_EMULATOR_HOST=localhost:8085
+   gcloud pubsub topics publish incoming-tasks-topic \
+     --project=test-project \
+     --message='{"taskId":"test-123","taskType":"GENERATE_REPORT","status":"PENDING","processedTimestamp":null}'
+   ```
 
 ## Configuration
 
